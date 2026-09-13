@@ -8,10 +8,7 @@
 #include "usbh_core.h"
 #include "usbh_cdc.h"
 
-extern USBH_ClassTypeDef CP210x_Class;
-extern USBH_ClassTypeDef FTDI_Class;
-extern USBH_ClassTypeDef CH34x_Class;
-extern USBH_ClassTypeDef PL2303_Class;
+extern USBH_ClassTypeDef USB_Serial_Class;
 
 USBH_StatusTypeDef USBH_Serial_RegisterClasses(USBH_HandleTypeDef *phost);
 USBH_StatusTypeDef USBH_Serial_Transmit(USBH_HandleTypeDef *phost, uint8_t *pbuff, uint16_t length);

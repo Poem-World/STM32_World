@@ -457,26 +457,101 @@ USBH_StatusTypeDef USBH_PL2303_Transmit(USBH_HandleTypeDef *phost, uint8_t *pbuf
 }
 
 // ==========================================
-// UNIFIED WRAPPER
+// UNIFIED VENDOR SERIAL CLASS (VID Auto-Dispatch)
 // ==========================================
+
+typedef enum {
+    SERIAL_TYPE_NONE = 0,
+    SERIAL_TYPE_CP210X,
+    SERIAL_TYPE_FTDI,
+    SERIAL_TYPE_CH34X,
+    SERIAL_TYPE_PL2303
+} SerialDeviceType;
+
+static SerialDeviceType active_device_type = SERIAL_TYPE_NONE;
+
+static USBH_StatusTypeDef Serial_Init(USBH_HandleTypeDef *phost) {
+    uint16_t vid = phost->device.DevDesc.idVendor;
+    if (vid == 0x10C4) {
+        active_device_type = SERIAL_TYPE_CP210X;
+        return CP210x_Init(phost);
+    } else if (vid == 0x0403) {
+        active_device_type = SERIAL_TYPE_FTDI;
+        return FTDI_Init(phost);
+    } else if (vid == 0x1A86) {
+        active_device_type = SERIAL_TYPE_CH34X;
+        return CH34x_Init(phost);
+    } else if (vid == 0x067B) {
+        active_device_type = SERIAL_TYPE_PL2303;
+        return PL2303_Init(phost);
+    }
+    return USBH_FAIL;
+}
+
+static USBH_StatusTypeDef Serial_DeInit(USBH_HandleTypeDef *phost) {
+    USBH_StatusTypeDef ret = USBH_OK;
+    switch (active_device_type) {
+        case SERIAL_TYPE_CP210X: ret = CP210x_DeInit(phost); break;
+        case SERIAL_TYPE_FTDI:   ret = FTDI_DeInit(phost); break;
+        case SERIAL_TYPE_CH34X:  ret = CH34x_DeInit(phost); break;
+        case SERIAL_TYPE_PL2303: ret = PL2303_DeInit(phost); break;
+        default: break;
+    }
+    active_device_type = SERIAL_TYPE_NONE;
+    return ret;
+}
+
+static USBH_StatusTypeDef Serial_Requests(USBH_HandleTypeDef *phost) {
+    switch (active_device_type) {
+        case SERIAL_TYPE_CP210X: return CP210x_Requests(phost);
+        case SERIAL_TYPE_FTDI:   return FTDI_Requests(phost);
+        case SERIAL_TYPE_CH34X:  return CH34x_Requests(phost);
+        case SERIAL_TYPE_PL2303: return PL2303_Requests(phost);
+        default: return USBH_FAIL;
+    }
+}
+
+static USBH_StatusTypeDef Serial_BgndProcess(USBH_HandleTypeDef *phost) {
+    switch (active_device_type) {
+        case SERIAL_TYPE_CP210X: return CP210x_BgndProcess(phost);
+        case SERIAL_TYPE_FTDI:   return FTDI_BgndProcess(phost);
+        case SERIAL_TYPE_CH34X:  return CH34x_BgndProcess(phost);
+        case SERIAL_TYPE_PL2303: return PL2303_BgndProcess(phost);
+        default: return USBH_OK;
+    }
+}
+
+static USBH_StatusTypeDef Serial_SOFProcess(USBH_HandleTypeDef *phost) {
+    return USBH_OK;
+}
+
+USBH_ClassTypeDef USB_Serial_Class = {
+    "USB_Serial_Class",
+    0xFF,
+    Serial_Init,
+    Serial_DeInit,
+    Serial_Requests,
+    Serial_BgndProcess,
+    Serial_SOFProcess,
+    NULL
+};
 
 USBH_StatusTypeDef USBH_Serial_RegisterClasses(USBH_HandleTypeDef *phost) {
     if (USBH_RegisterClass(phost, USBH_CDC_CLASS) != USBH_OK) return USBH_FAIL;
-    if (USBH_RegisterClass(phost, &CP210x_Class) != USBH_OK) return USBH_FAIL;
-    if (USBH_RegisterClass(phost, &FTDI_Class) != USBH_OK) return USBH_FAIL;
-    if (USBH_RegisterClass(phost, &CH34x_Class) != USBH_OK) return USBH_FAIL;
-    if (USBH_RegisterClass(phost, &PL2303_Class) != USBH_OK) return USBH_FAIL;
+    if (USBH_RegisterClass(phost, &USB_Serial_Class) != USBH_OK) return USBH_FAIL;
     return USBH_OK;
 }
 
 USBH_StatusTypeDef USBH_Serial_Transmit(USBH_HandleTypeDef *phost, uint8_t *pbuff, uint16_t length) {
     if (phost->gState != HOST_CLASS) return USBH_FAIL;
     if (phost->pActiveClass == USBH_CDC_CLASS) return USBH_CDC_Transmit(phost, pbuff, length);
-    else if (phost->pActiveClass == &CP210x_Class) return USBH_CP210x_Transmit(phost, pbuff, length);
-    else if (phost->pActiveClass == &FTDI_Class) return USBH_FTDI_Transmit(phost, pbuff, length);
-    else if (phost->pActiveClass == &CH34x_Class) return USBH_CH34x_Transmit(phost, pbuff, length);
-    else if (phost->pActiveClass == &PL2303_Class) return USBH_PL2303_Transmit(phost, pbuff, length);
-    return USBH_FAIL;
+    switch (active_device_type) {
+        case SERIAL_TYPE_CP210X: return USBH_CP210x_Transmit(phost, pbuff, length);
+        case SERIAL_TYPE_FTDI:   return USBH_FTDI_Transmit(phost, pbuff, length);
+        case SERIAL_TYPE_CH34X:  return USBH_CH34x_Transmit(phost, pbuff, length);
+        case SERIAL_TYPE_PL2303: return USBH_PL2303_Transmit(phost, pbuff, length);
+        default: return USBH_FAIL;
+    }
 }
 
 int USBH_Serial_ReadLine(USBH_HandleTypeDef *phost, char *buf, uint16_t max_len) {
