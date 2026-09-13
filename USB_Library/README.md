@@ -29,6 +29,11 @@ STM32CubeMX에서 "Generate Code"를 실행하면 일반적으로 수정한 USB 
 - **영구 해결책**: CubeMX가 보존하는 `/* USER CODE BEGIN USB_HOST_Init_PreTreatment */` 영역에 커스텀 초기화(`USBH_Serial_RegisterClasses`)를 넣고 끝에 `return;`을 선언했습니다.
 - **결과**: CubeMX가 밑에 기본 CDC 등록 코드를 다시 생성하더라도 `return;`에 의해 절대 실행되지 않고 안전한 통합 등록 코드만 실행됩니다.
 
+### 1.4. usbh_conf.c 하드웨어 ULPI 핀 영구 보호 (STM32H747I-DISCO / HAL_HCD_MspInit)
+- **과거 문제점**: CubeMX에서 이더넷(NIC)이나 다른 주변장치를 활성화할 때 자동 핀 재배치로 인해 ULPI 핀이 `PH4`/`PI11`에서 엉뚱한 `PC2`/`PC3`로 강제 변경되어 `HAL_HCD_Init` 실패(`result = 1`) 발생.
+- **영구 해결책**: `usbh_conf.c`의 `/* USER CODE BEGIN USB_OTG_HS_MspInit 0 */` 영역에 Discovery 정품 보드의 하드웨어 ULPI 핀(`PH4=NXT`, `PI11=DIR`, `PA5=CLK`, `PA3=D0`, `PB0..PB13=D1..D7`, `PC0=STP`, 속도 `VERY_HIGH`)을 선언하고 `return;`으로 마무리.
+- **결과**: CubeMX에서 주변장치 핀을 어떻게 바꾸거나 재생성하더라도 USB ULPI 통신은 항상 올바른 하드웨어 핀으로 동작 보장.
+
 ---
 
 ## 2. 드라이버 주요 사양 및 버퍼 구조
