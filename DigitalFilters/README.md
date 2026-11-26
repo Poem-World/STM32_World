@@ -1,6 +1,6 @@
 # Embedded Real-Time Digital Filters Library (C99 / C11 / C++)
 
-Cortex-M FPU(Floating Point Unit) 하드웨어 가속에 최적화된 독립형(Standalone) 실시간 디지털 필터 라이브러리입니다. 모션 제어, 센서 퓨전, 모터 제어기, 오디오/계측 신호 처리를 위해 설계되었습니다.
+Cortex-M FPU(Floating Point Unit) 하드웨어 가속에 최적화된 독립형(Standalone) 실시간 디지털 필터 라이브러리입니다. 모션 제어, 센서 퓨전, 모터 제어기, 오디오/계측 신호 처리를 위해 설계하였으나 C++ 표준으로 설계하여 다른 용도로 사용가능.
 
 ---
 
@@ -20,7 +20,7 @@ DigitalFilters/
 
 ## 2. 카테고리 1: 스무딩 및 노이즈 제거 (Smoothing & Noise Reduction)
 
-센서 입력의 무작위 백색 잡음(White Noise)과 순간적인 이상치/스파이크를 제거합니다.
+센서 입력의 무작위 백색 잡음(White Noise)과 순간적인 이상치/스파이크를 제거.
 
 ### 2.1 이동 평균 필터 (Moving Average Filter)
 - **알고리즘**: 순환 링 버퍼(Circular Buffer)와 누적합(Running Sum) 기반으로 윈도우 크기($N$)와 무관하게 **$O(1)$** 연산 보장.
@@ -48,7 +48,7 @@ DigitalFilters/
 
 ## 3. 카테고리 2: 주파수 선택 필터 (Frequency Selective Biquad IIR)
 
-Robert Bristow-Johnson의 **Audio EQ Cookbook** 공식 기반 2차 IIR 바이쿼드 필터입니다. FPU 오차를 최소화하고 지연을 줄이기 위해 **Direct Form II Transposed** 구조를 적용했습니다.
+Robert Bristow-Johnson의 **Audio EQ Cookbook** 공식 기반 2차 IIR 바이쿼드 필터입니다. FPU 오차를 최소화하고 지연을 줄이기 위해 **Direct Form II Transposed** 구조를 적용.
 
 ### 3.1 차분 방정식 (Direct Form II Transposed)
 - **전달함수**:
@@ -97,7 +97,7 @@ Robert Bristow-Johnson의 **Audio EQ Cookbook** 공식 기반 2차 IIR 바이쿼
 $$\text{sgn}(x) = \begin{cases} +1.0 & (x > 0) \\ 0.0 & (x = 0) \\ -1.0 & (x < 0) \end{cases}$$
 
 ### 5.2 데드존 필터 (Deadband Filter)
-0 부근 정지 상태의 미세 진동/헌팅(Hunting)을 마스킹합니다. C11 `_Generic` 및 C++ 오버로딩을 통해 대칭/불평형을 동일 함수명으로 지원합니다.
+0 부근 정지 상태의 미세 진동/헌팅(Hunting)을 마스킹합니다. C11 `_Generic` 및 C++ 오버로딩을 통해 대칭/불평형을 동일 함수명으로 지원.
 
 - **1) 대칭형 데드존 ($[-V_{th}, +V_{th}]$)**:
   - **단순 절삭 (Step-Cut)**:
